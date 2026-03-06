@@ -1,11 +1,11 @@
-use typelater::Typelater;
+use subset::Subset;
 
 struct Cube {
     side: usize,
 }
 
-#[derive(Typelater)]
-#[typelater(from = "Cube")]
+#[derive(Subset)]
+#[subset(from = "Cube")]
 struct Square {
     side: usize,
 }

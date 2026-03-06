@@ -1,6 +1,5 @@
-# Typelater
+# Subset
 
-Foundational types and their children make me want to type later
 
 ## Status/Version
 
@@ -51,12 +50,12 @@ impl From<User> for PublicUser {
 }
 ```
 
-Super easy. And tedious! Especially if we have multiple view structs for various contracts. Typelater generates the same code, but with a simpler api (especially when there are more than 3 fields).
+Super easy. And tedious! Especially if we have multiple view structs for various contracts. Subset generates the same code, but with a simpler api (especially when there are more than 3 fields).
 
 ## Example
 
 ```rust
-use typelater::Typelater;
+use subset::Subset;
 
 struct User {
     username: String,
@@ -64,17 +63,17 @@ struct User {
     last_login: chrono::DateTime<chrono::Utc>
 }
 
-#[derive(Typelater)]
-#[typelater(from = "User")]
+#[derive(Subset)]
+#[subset(from = "User")]
 struct PublicUser {
     username: String,
 }
 ```
 
-Typelater supports aliasing fields, like:
+Subset supports aliasing fields, like:
 
 ```rust
-use typelater::Typelater;
+use subset::Subset;
 
 struct User {
     username: String,
@@ -82,18 +81,18 @@ struct User {
     last_login: chrono::DateTime<chrono::Utc>
 }
 
-#[derive(Typelater)]
-#[typelater(from = "User")]
+#[derive(Subset)]
+#[subset(from = "User")]
 struct PublicUser {
-    #[typelater(alias = "username")]
+    #[subset(alias = "username")]
     name: String,
 }
 ```
 
-Typelater supports nested fields, like:
+Subset supports nested fields, like:
 
 ```rust
-use typelater::Typelater;
+use subset::Subset;
 
 struct UserMetadata {
     followers: usize,
@@ -106,18 +105,27 @@ struct User {
     metadata: UserMetadata,
 }
 
-#[derive(Typelater)]
-#[typelater(from = "User")]
+#[derive(Subset)]
+#[subset(from = "User")]
 struct PublicUser {
     username: String,
-    #[typelater(path = "metadata.followers")]
+    #[subset(path = "metadata.followers")]
     followers: usize,
 }
 ```
 
 The need for this crate is dubious, but I wanted to learn more about proc macros and this is the lens I have chosen to do it under.
 
+-----
+
 TODO:
+
+features:
 
 - [ ] Add generate option when the "child" has overflowing fields (e.g. we need to generate display fields in DTOs)
 - [ ] Add default option when the "child" has overflowing fields (e.g. we're gonna do something else with this value now)
+
+chores:
+- [ ] Add more comprehensive error messaging to proc macro (try to break it? idk. it's probably fine this thing is simple af)
+- [ ] Write more complete rustdoc
+- [ ] Publish to crates.io
