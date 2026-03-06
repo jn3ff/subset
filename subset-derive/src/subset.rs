@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{
-    parse::{Parse, ParseStream},
     Data, DeriveInput, Field, Ident, LitStr, Result, Token,
+    parse::{Parse, ParseStream},
 };
 
 struct SubsetAttr {
@@ -53,17 +53,14 @@ pub fn impl_subset(input: DeriveInput) -> TokenStream2 {
             quote! { #target_ident: #rhs }
         }),
         _ => {
-            return syn::Error::new_spanned(
-                &struct_name,
-                "Subset can only be derived on structs",
-            )
-            .to_compile_error();
+            return syn::Error::new_spanned(&struct_name, "Subset can only be derived on structs")
+                .to_compile_error();
         }
     };
 
     quote! {
         impl From<#source_type_ident> for #struct_name {
-            fn from(source: #source_type_ident) -> Self {
+            fn from(from: #source_type_ident) -> Self {
                 Self { #(#fields_iter),* }
             }
         }
@@ -80,6 +77,7 @@ fn field_rhs_tokens(field: &Field, target_ident: &Ident) -> TokenStream2 {
     // Look for #[subset(...)] on the field
     let mut alias_lit: Option<LitStr> = None;
     let mut path_lit: Option<LitStr> = None;
+    let mut generate_lit: Option<LitStr> = None;
 
     for attr in &field.attrs {
         if attr.path().is_ident("subset") {
@@ -92,8 +90,14 @@ fn field_rhs_tokens(field: &Field, target_ident: &Ident) -> TokenStream2 {
                     let lit: LitStr = meta.value()?.parse()?;
                     path_lit = Some(lit);
                     Ok(())
+                } else if meta.path.is_ident("generate") {
+                    let lit: LitStr = meta.value()?.parse()?;
+                    generate_lit = Some(lit);
+                    Ok(())
                 } else {
-                    Err(meta.error("unsupported subset attribute; expected `alias` or `path`"))
+                    Err(meta.error(
+                        "unsupported subset attribute; expected `alias`, `path`, or `generate`",
+                    ))
                 }
             });
             // If parse_nested_meta fails, return a compile error at the attribute
@@ -103,24 +107,39 @@ fn field_rhs_tokens(field: &Field, target_ident: &Ident) -> TokenStream2 {
         }
     }
 
-    if let Some(lit) = alias_lit {
+    let set_count =
+        alias_lit.is_some() as u8 + path_lit.is_some() as u8 + generate_lit.is_some() as u8;
+    if set_count > 1 {
+        return syn::Error::new_spanned(
+            field,
+            "only one of `alias`, `path`, or `generate` may be specified per field",
+        )
+        .to_compile_error();
+    }
+
+    if let Some(lit) = generate_lit {
+        let expr: TokenStream2 = lit.value().parse().unwrap_or_else(|_| {
+            syn::Error::new(lit.span(), "failed to parse `generate` expression").to_compile_error()
+        });
+        expr
+    } else if let Some(lit) = alias_lit {
         let alias_ident = Ident::new(&lit.value(), lit.span());
-        quote!( source.#alias_ident )
+        quote!( from.#alias_ident )
     } else if let Some(lit) = path_lit {
-        // Split "a.b.c" into identifiers and build chained access: source.a.b.c
+        // Split "a.b.c" into identifiers and build chained access: from.a.b.c
         let segs: Vec<Ident> = lit
             .value()
             .split('.')
             .map(|s| Ident::new(s, lit.span()))
             .collect();
 
-        let mut ts: TokenStream2 = quote!(source);
+        let mut ts: TokenStream2 = quote!(from);
         for seg in segs {
             ts = quote!( #ts.#seg );
         }
         ts
     } else {
         // Default: same name in source and target
-        quote!( source.#target_ident )
+        quote!( from.#target_ident )
     }
 }

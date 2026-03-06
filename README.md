@@ -114,6 +114,31 @@ struct PublicUser {
 }
 ```
 
+Subset supports on-conversion field calculation, like
+```rust
+use subset::Subset;
+
+struct User {
+    id: u32,
+    username: String,
+    email: String,
+    last_login: chrono::DateTime<chrono::Utc>,
+}
+
+fn make_display(username: &str, id: u32) -> String {
+    format!("{}#{}", username, id)
+}
+
+#[derive(Subset)]
+#[subset(from = "User")]
+struct DisplayUser {
+    #[subset(generate = "make_display(&from.username, from.id)")]
+    display_name_functioned: String,
+    #[subset(generate = "format!(\"{}#{}\", from.username, from.id)")]
+    display_name_closured: String,
+}
+```
+
 The need for this crate is dubious, but I wanted to learn more about proc macros and this is the lens I have chosen to do it under.
 
 -----
@@ -122,10 +147,9 @@ TODO:
 
 features:
 
-- [ ] Add generate option when the "child" has overflowing fields (e.g. we need to generate display fields in DTOs)
-- [ ] Add default option when the "child" has overflowing fields (e.g. we're gonna do something else with this value now)
+- [x] Add generate option when the "child" has overflowing fields (e.g. we need to generate display fields in DTOs)
+- [ ] Add functional to map implementations. Should respect alias & path maps.
 
 chores:
 - [ ] Add more comprehensive error messaging to proc macro (try to break it? idk. it's probably fine this thing is simple af)
 - [ ] Write more complete rustdoc
-- [ ] Publish to crates.io
