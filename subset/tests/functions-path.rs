@@ -1,3 +1,4 @@
+#![cfg(feature = "functions")]
 use subset::Subset;
 
 #[allow(dead_code)]

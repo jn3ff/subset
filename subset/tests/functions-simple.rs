@@ -1,3 +1,4 @@
+#![cfg(feature = "functions")]
 use subset::Subset;
 
 #[derive(Clone)]

@@ -6,6 +6,9 @@ edition = "2024"
 [lib]
 proc-macro = true
 
+[features]
+functions = ["syn/visit-mut"]
+
 [dependencies]
 proc-macro2 = "1.0.101"
 quote = "1.0.41"

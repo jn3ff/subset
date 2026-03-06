@@ -3,6 +3,9 @@ name = "subset"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+functions = ["subset-derive/functions"]
+
 [dependencies]
 subset-derive = { path = "../subset-derive"}
 
