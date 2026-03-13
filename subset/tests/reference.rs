@@ -1,15 +1,16 @@
+// TODO: as_ref support not yet implemented
 // use subset::Subset;
-
+//
 // struct Cube {
 //     side: usize,
 // }
-
+//
 // #[derive(Subset)]
 // #[subset(from = "Cube", as_ref)]
 // struct Square<'a> {
 //     side: &'a usize,
 // }
-
+//
 // #[test]
 // fn converts_cube_into_square() {
 //     let cube = Cube { side: 6 };

@@ -139,6 +139,34 @@ struct DisplayUser {
 }
 ```
 
+Subset supports copying methods from the source type onto the subset (behind the `functions` feature flag):
+```rust
+use subset::Subset;
+
+#[derive(Clone)]
+struct Cube {
+    side: usize,
+}
+
+impl Cube {
+    fn scale(&mut self, scalar: usize) {
+        self.side *= scalar;
+    }
+}
+
+#[derive(Subset)]
+#[subset(from = "Cube")]
+#[subset(functions = "from::scale")]
+struct Square {
+    side: usize,
+}
+
+// Square now has a `scale` method with `self.side` accesses
+// rewritten to match any alias/path mappings.
+// Enabling the `functions` feature activates compile-time source scanning
+// and method body rewriting in the proc macro.
+```
+
 The need for this crate is dubious, but I wanted to learn more about proc macros and this is the lens I have chosen to do it under.
 
 -----
@@ -148,7 +176,8 @@ TODO:
 features:
 
 - [x] Add generate option when the "child" has overflowing fields (e.g. we need to generate display fields in DTOs)
-- [ ] Add functional to map implementations. Should respect alias & path maps.
+- [x] Add functions feature to copy methods from source type. Respects alias & path maps.
+- [ ] Add as_ref support for borrowing fields by reference
 
 chores:
 - [ ] Add more comprehensive error messaging to proc macro (try to break it? idk. it's probably fine this thing is simple af)
